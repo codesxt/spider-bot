@@ -1,0 +1,52 @@
+<?xml version="1.0"?>
+<launch>
+	<arg name="paused" default="true"/>
+	<arg name="use_sim_time" default="true"/>
+	<arg name="gui" default="true"/>
+	<arg name="headless" default="false"/>
+	<arg name="debug" default="false"/>
+	<arg name="use_gui" default="false"/>
+
+	<include file="$(find gazebo_ros)/launch/empty_world.launch">
+		<arg name="world_name" value="$(find spider_gazebo)/worlds/spider.world"/>
+		<arg name="debug" value="$(arg debug)" />
+		<arg name="gui" value="$(arg gui)" />
+		<arg name="paused" value="$(arg paused)"/>
+		<arg name="use_sim_time" value="$(arg use_sim_time)"/>
+		<arg name="headless" value="$(arg headless)"/>	
+	</include>
+
+	<param name="use_gui" value="$(arg use_gui)"/>
+
+	<!-- Convierte la descripción en xacro a urdf y la publica en el servidor de parámetros -->
+	<param name="robot_description" command="$(find xacro)/xacro.py $(find spider_description)/urdf/spider.xacro" />
+
+   	<!-- Carga en Gazebo el robot publicado en el servidor de parámetros -->
+	<node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model" args="-param robot_description -urdf -model spider" />
+
+	<!-- Configuraciones necesarias para el control -->
+	<rosparam file="$(find spider_control)/config/spider.yaml" command="load"/>
+	<!--
+	<node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher">
+		<remap from="joint_states" to="/spider/joint_states" />
+	</node>
+	-->
+	
+	<!-- Controler spawner para controlar el robot con el plugin en gazebo -->
+	
+	<node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false"
+    output="screen" ns="/spider" args=" joint_state_controller
+    									a_joint_position_controller
+    									b_joint_position_controller
+    									c_joint_position_controller
+    									FL_a_joint_position_controller
+    									FL_b_joint_position_controller
+    									FL_c_joint_position_controller"/>
+
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" respawn="false" output="screen">
+		<remap from="/joint_states" to="/spider/joint_states" />
+	</node>
+
+	<!-- Abre Rviz con el archivo de configuración personalizado -->
+	<node name="rviz" pkg="rviz" type="rviz" args="-d $(find spider_control)/rviz/config.rviz"/>
+</launch>

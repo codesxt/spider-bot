@@ -1,0 +1,37 @@
+<?xml version="1.0"?>
+<!-- Gazebo description for the robot -->
+<robot>
+	<gazebo>
+		<plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">
+			<robotNamespace>/spider</robotNamespace>
+		</plugin>
+	</gazebo>
+
+	<gazebo reference="body">
+		<material>Gazebo/White</material>
+	</gazebo>
+
+	<gazebo reference="proximal_leg">
+		<material>Gazebo/Orange</material>
+	</gazebo>
+
+	<gazebo reference="distal_leg">
+		<material>Gazebo/Blue</material>
+	</gazebo>
+
+	<gazebo reference="a_servo">
+		<material>Gazebo/Blue</material>
+	</gazebo>
+
+	<gazebo reference="b_servo">
+		<material>Gazebo/Blue</material>
+	</gazebo>
+
+	<gazebo reference="proximal_leg">
+		<material>Gazebo/Gray</material>
+	</gazebo>
+
+	<gazebo reference="distal_leg">
+		<material>Gazebo/Gray</material>
+	</gazebo>
+</robot>
