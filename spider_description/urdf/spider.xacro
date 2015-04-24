@@ -23,6 +23,11 @@
 
 <link name="base_link"/>
 
+<make_leg name="FL" reflect="0" parent="body" xpos="${body_length/4}"/>
+<make_leg name="FR" reflect="1" parent="body" xpos="${body_length/4}"/>
+<make_leg name="BL" reflect="0" parent="body" xpos="${-body_length/4}"/>
+<make_leg name="BR" reflect="1" parent="body" xpos="${-body_length/4}"/>
+
 <link name="body">
 	<collision>
 		<origin xyz="0 0 0" rpy="0 0 0"/>
@@ -46,203 +51,9 @@
 	</inertial>
 </link>
 
-<link name="a_servo">
-	<collision>
-		<origin xyz="0 0 0" rpy="0 1.57 3.14"/>
-		<geometry>
-			<box size="${servo_length} ${servo_width} ${servo_height}"/>
-		</geometry>
-	</collision>
-
-	<visual>
-		<origin xyz="0 0 0" rpy="0 1.57 3.14"/>
-		<geometry>
-			<box size="${servo_length} ${servo_width} ${servo_height}"/>
-		</geometry>
-		<material name="white"/>
-	</visual>
-
-	<inertial>
-		<origin xyz="0 0 0" rpy="0 1.57 3.14"/>
-		<mass value="${servo_mass}"/>
-		<box_inertia m="${servo_mass}" x="${servo_length}" y="${servo_width}" z="${servo_height}"/>
-	</inertial>
-</link>
-
-<link name="b_servo">
-	<collision>
-		<origin xyz="0 0 0" rpy="1.57 0 -1.57"/>
-		<geometry>
-			<box size="${servo_length} ${servo_width} ${servo_height}"/>
-		</geometry>
-	</collision>
-
-	<visual>
-		<origin xyz="0 0 0" rpy="1.57 0 -1.57"/>
-		<geometry>
-			<box size="${servo_length} ${servo_width} ${servo_height}"/>
-		</geometry>
-		<material name="blue"/>
-	</visual>
-
-	<inertial>
-		<origin xyz="0 0 0" rpy="1.57 0 -1.57"/>
-		<mass value="${servo_mass}"/>
-		<box_inertia m="${servo_mass}" x="${servo_length}" y="${servo_width}" z="${servo_height}"/>
-	</inertial>
-</link>
-
-<link name="proximal_leg">
-	<collision>
-		<origin xyz="0 0 ${leg_a_length/2}" rpy="0 0 0"/>
-		<geometry>
-			<cylinder length="${leg_a_length}" radius="${leg_radius}"/>
-		</geometry>
-	</collision>
-	
-	<visual>
-		<origin xyz="0 0 ${leg_a_length/2}" rpy="0 0 0"/>
-		<geometry>
-			<cylinder length="${leg_a_length}" radius="${leg_radius}"/>
-		</geometry>
-		<material name="white"/>
-	</visual>
-	
-	<inertial>
-		<origin xyz="0 0 ${leg_a_length/2}" rpy="0 0 0"/>
-		<mass value="${leg_mass}"/>
-		<cylinder_inertia m="${leg_mass}" r="${leg_radius}" h="${leg_a_length}"/>
-	</inertial>
-</link>
-
-<link name="distal_leg">
-	<collision>
-		<origin xyz="0 0 ${leg_b_length/2}" rpy="0 0 0"/>
-		<geometry>
-			<cylinder length="${leg_b_length}" radius="${leg_radius}"/>
-		</geometry>
-	</collision>
-	
-	<visual>
-		<origin xyz="0 0 ${leg_b_length/2}" rpy="0 0 0"/>
-		<geometry>
-			<cylinder length="${leg_b_length}" radius="${leg_radius}"/>
-		</geometry>
-		<material name="white"/>
-	</visual>
-	
-	<inertial>
-		<origin xyz="0 0 ${leg_b_length/2}" rpy="0 0 0"/>
-		<mass value="${leg_mass}"/>
-		<cylinder_inertia m="${leg_mass}" r="${leg_radius}" h="${leg_b_length}"/>
-	</inertial>
-</link>
-
-<!-- Joints -->
-
 <joint name="base_joint" type="fixed">
 	<parent link="base_link"/>
 	<child link="body"/>
 </joint>
-
-<joint name="leg_fix" type="fixed">
-	<parent link="body"/>
-	<child link="a_servo"/>
-	<origin xyz="0 ${(body_width+servo_length)/2} 0" rpy="0 0 1.57"/>
-</joint>
-
-<make_leg name="FL" reflect="-1" parent="body"/>
-
-<joint name="a_joint" type="revolute">
-	<parent link="a_servo"/>
-	<child link="b_servo"/>
-	<origin xyz="0 0 ${servo_height/2}" rpy="0 0 0"/>
-	<axis xyz="0 0 1"/>
-	<limit lower="-1.57" upper="1.57" effort="1" velocity="10"/>
-</joint>
-
-<joint name="b_joint" type="revolute">
-	<parent link="b_servo"/>
-	<child link="proximal_leg"/>
-	<origin xyz="0 ${servo_width+leg_radius} 0" rpy="0 0 0"/>
-	<axis xyz="0 1 0"/>
-	<limit lower="0" upper="3.14" effort="1" velocity="10"/>
-</joint>
-
-<joint name="c_joint" type="revolute">
-	<parent link="proximal_leg"/>
-	<child link="distal_leg"/>
-	<origin xyz="0 ${leg_radius*2} ${leg_a_length}" rpy="0 3.14 0"/>
-	<axis xyz="0 1 0"/>
-	<limit lower="-3.14" upper="0" effort="1" velocity="10"/>
-</joint>
-
-<!-- Transmissions -->
-
-<transmission name="transmission_a">
-	<type>transmission_interface/SimpleTransmission</type>
-	<joint name="a_joint">
-		<hardwareInterface>PositionJointInterface</hardwareInterface>
-	</joint>
-	<actuator name="a_joint_leg_actuator">
-		<hardwareInterface>PositionJointInterface</hardwareInterface>
-		<mechanicalReduction>10</mechanicalReduction>
-	</actuator>
-</transmission>
-
-<transmission name="transmission_b">
-	<type>transmission_interface/SimpleTransmission</type>
-	<joint name="b_joint">
-		<hardwareInterface>PositionJointInterface</hardwareInterface>
-	</joint>
-	<actuator name="b_joint_leg_actuator">
-		<hardwareInterface>PositionJointInterface</hardwareInterface>
-		<mechanicalReduction>10</mechanicalReduction>
-	</actuator>
-</transmission>
-
-<transmission name="transmission_c">
-	<type>transmission_interface/SimpleTransmission</type>
-	<joint name="c_joint">
-		<hardwareInterface>PositionJointInterface</hardwareInterface>
-	</joint>
-	<actuator name="c_joint_leg_actuator">
-		<hardwareInterface>PositionJointInterface</hardwareInterface>
-		<mechanicalReduction>10</mechanicalReduction>
-	</actuator>
-</transmission>
-
-<transmission name="FL_a_transmission">
-	<type>transmission_interface/SimpleTransmission</type>
-	<joint name="FL_a_joint">
-		<hardwareInterface>PositionJointInterface</hardwareInterface>
-	</joint>
-	<actuator name="FL_a_joint_leg_actuator">
-		<hardwareInterface>PositionJointInterface</hardwareInterface>
-		<mechanicalReduction>10</mechanicalReduction>
-	</actuator>
-</transmission>
-
-<transmission name="FL_b_transmission">
-	<type>transmission_interface/SimpleTransmission</type>
-	<joint name="FL_b_joint">
-		<hardwareInterface>PositionJointInterface</hardwareInterface>
-	</joint>
-	<actuator name="FL_b_joint_leg_actuator">
-		<hardwareInterface>PositionJointInterface</hardwareInterface>
-		<mechanicalReduction>10</mechanicalReduction>
-	</actuator>
-</transmission>
-
-<transmission name="FL_c_transmission">
-	<type>transmission_interface/SimpleTransmission</type>
-	<joint name="FL_c_joint">
-		<hardwareInterface>PositionJointInterface</hardwareInterface>
-	</joint>
-	<actuator name="FL_c_joint_leg_actuator">
-		<hardwareInterface>PositionJointInterface</hardwareInterface>
-		<mechanicalReduction>10</mechanicalReduction>
-	</actuator>
-</transmission>
 
 </robot>

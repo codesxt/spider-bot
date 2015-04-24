@@ -4,21 +4,6 @@ spider:
     type: joint_state_controller/JointStateController
     publish_rate: 50  
 
-  a_joint_position_controller:
-    type: position_controllers/JointPositionController
-    joint: a_joint
-    pid: {p: 100.0, i: 0.01, d: 10.0}
-
-  b_joint_position_controller:
-    type: position_controllers/JointPositionController
-    joint: b_joint
-    pid: {p: 100.0, i: 0.01, d: 10.0}
-
-  c_joint_position_controller:
-    type: position_controllers/JointPositionController
-    joint: c_joint
-    pid: {p: 100.0, i: 0.01, d: 10.0}
-
   FL_a_joint_position_controller:
     type: position_controllers/JointPositionController
     joint: FL_a_joint
@@ -32,4 +17,49 @@ spider:
   FL_c_joint_position_controller:
     type: position_controllers/JointPositionController
     joint: FL_c_joint
+    pid: {p: 100.0, i: 0.01, d: 10.0}
+
+  FR_a_joint_position_controller:
+    type: position_controllers/JointPositionController
+    joint: FR_a_joint
+    pid: {p: 100.0, i: 0.01, d: 10.0}
+
+  FR_b_joint_position_controller:
+    type: position_controllers/JointPositionController
+    joint: FR_b_joint
+    pid: {p: 100.0, i: 0.01, d: 10.0}
+
+  FR_c_joint_position_controller:
+    type: position_controllers/JointPositionController
+    joint: FR_c_joint
+    pid: {p: 100.0, i: 0.01, d: 10.0}
+
+  BL_a_joint_position_controller:
+    type: position_controllers/JointPositionController
+    joint: BL_a_joint
+    pid: {p: 100.0, i: 0.01, d: 10.0}
+
+  BL_b_joint_position_controller:
+    type: position_controllers/JointPositionController
+    joint: BL_b_joint
+    pid: {p: 100.0, i: 0.01, d: 10.0}
+
+  BL_c_joint_position_controller:
+    type: position_controllers/JointPositionController
+    joint: BL_c_joint
+    pid: {p: 100.0, i: 0.01, d: 10.0}
+
+  BR_a_joint_position_controller:
+    type: position_controllers/JointPositionController
+    joint: BR_a_joint
+    pid: {p: 100.0, i: 0.01, d: 10.0}
+
+  BR_b_joint_position_controller:
+    type: position_controllers/JointPositionController
+    joint: BR_b_joint
+    pid: {p: 100.0, i: 0.01, d: 10.0}
+
+  BR_c_joint_position_controller:
+    type: position_controllers/JointPositionController
+    joint: BR_c_joint
     pid: {p: 100.0, i: 0.01, d: 10.0}

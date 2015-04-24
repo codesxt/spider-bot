@@ -21,40 +21,17 @@
   />
 </macro>
 
-<macro name="make_leg" params="name reflect parent">
+<macro name="make_leg" params="name reflect parent xpos">
   <link name="${name}_a_servo">
     <collision>
-      <origin xyz="0 0 0" rpy="0 1.57 0"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
         <box size="${servo_length} ${servo_width} ${servo_height}"/>
       </geometry>
     </collision>
 
     <visual>
-      <origin xyz="0 0 0" rpy="0 1.57 0"/>
-      <geometry>
-        <box size="${servo_length} ${servo_width} ${servo_height}"/>
-      </geometry>
-      <material name="white"/>
-    </visual>
-
-    <inertial>
-      <origin xyz="0 0 0" rpy="0 1.57 0"/>
-      <mass value="${servo_mass}"/>
-      <box_inertia m="${servo_mass}" x="${servo_length}" y="${servo_width}" z="${servo_height}"/>
-    </inertial>
-  </link>
-
-  <link name="${name}_b_servo">
-    <collision>
-      <origin xyz="0 0 0" rpy="1.57 0 ${reflect*1.57}"/>
-      <geometry>
-        <box size="${servo_length} ${servo_width} ${servo_height}"/>
-      </geometry>
-    </collision>
-
-    <visual>
-      <origin xyz="0 0 0" rpy="1.57 0 ${reflect*1.57}"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
         <box size="${servo_length} ${servo_width} ${servo_height}"/>
       </geometry>
@@ -62,7 +39,30 @@
     </visual>
 
     <inertial>
-      <origin xyz="0 0 0" rpy="1.57 0 ${reflect*1.57}"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="${servo_mass}"/>
+      <box_inertia m="${servo_mass}" x="${servo_length}" y="${servo_width}" z="${servo_height}"/>
+    </inertial>
+  </link>
+
+  <link name="${name}_b_servo">
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <box size="${servo_length} ${servo_width} ${servo_height}"/>
+      </geometry>
+    </collision>
+
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <box size="${servo_length} ${servo_width} ${servo_height}"/>
+      </geometry>
+      <material name="blue"/>
+    </visual>
+
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
       <mass value="${servo_mass}"/>
       <box_inertia m="${servo_mass}" x="${servo_length}" y="${servo_width}" z="${servo_height}"/>
     </inertial>
@@ -117,32 +117,65 @@
   <joint name="${name}_leg_fix" type="fixed">
     <parent link="body"/>
     <child link="${name}_a_servo"/>
-    <origin xyz="0 ${reflect*(body_width+servo_length)/2} 0" rpy="0 0 ${reflect*1.57}"/>
+    <origin xyz="${xpos} ${(-1)*((body_width+servo_length)/2)*(2*reflect-1)} 0" rpy="0 -1.57 ${(-1)*(1.57)*(2*reflect-1)}"/>
   </joint>
 
   <joint name="${name}_a_joint" type="revolute">
     <parent link="${name}_a_servo"/>
     <child link="${name}_b_servo"/>
-    <origin xyz="0 0 ${servo_height/2}" rpy="0 0 0"/>
-    <axis xyz="0 0 1"/>
-    <limit lower="${reflect*1.57}" upper="${reflect*-1.57}" effort="1" velocity="10"/>
+    <origin xyz="${(servo_length+servo_width)/2} 0 ${-servo_height/4}" rpy="0 0 ${(1.57)*(2*reflect-1)}"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="-1.57" upper="1.57" effort="1" velocity="1"/>
   </joint>
 
   <joint name="${name}_b_joint" type="revolute">
     <parent link="${name}_b_servo"/>
     <child link="${name}_proximal_leg"/>
-    <origin xyz="0 ${reflect*(servo_width+leg_radius)} 0" rpy="0 0 0"/>
-    <axis xyz="0 1 0"/>
-    <!-- Aquí está el problema. Para un lado debe ser l=-3.14 y u=0 y para el otro l=0 y u=3.14 -->
-    <limit lower="0" upper="${reflect*3.14}" effort="1" velocity="10"/>
+    <origin xyz="${(servo_length+leg_radius)/2} 0 ${-servo_height/4}" rpy="${(1.57)*(2*reflect-1)} 0 0"/>
+    <axis xyz="1 0 0"/>
+    <!-- Aqui esta el problema. Para un lado debe ser l=-3.14 y u=0 y para el otro l=0 y u=3.14 -->
+    <limit lower="${(1-reflect)*(-3.14)+(reflect)*(0)}" upper="${(1-reflect)*(0)+(reflect)*(3.14)}" effort="1" velocity="1"/>
   </joint>
 
   <joint name="${name}_c_joint" type="revolute">
     <parent link="${name}_proximal_leg"/>
     <child link="${name}_distal_leg"/>
-    <origin xyz="0 ${reflect*(leg_radius*2)} ${leg_a_length}" rpy="0 3.14 0"/>
-    <axis xyz="0 1 0"/>
-    <limit lower="-3.14" upper="0" effort="1" velocity="10"/>
+    <origin xyz="0 ${(-1)*(2*reflect-1)*(leg_radius*2)} ${leg_a_length}" rpy="0 3.14 0"/>
+    <axis xyz="1 0 0"/>
+    <limit lower="${(1-reflect)*(-3.14)+(reflect)*(0)}" upper="${(1-reflect)*(0)+(reflect)*(3.14)}" effort="1" velocity="1"/>
   </joint>
+
+  <transmission name="${name}_a_transmission">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="${name}_a_joint">
+      <hardwareInterface>PositionJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="${name}_a_joint_leg_actuator">
+      <hardwareInterface>PositionJointInterface</hardwareInterface>
+      <mechanicalReduction>10</mechanicalReduction>
+    </actuator>
+  </transmission>
+
+  <transmission name="${name}_b_transmission">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="${name}_b_joint">
+      <hardwareInterface>PositionJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="${name}_b_joint_leg_actuator">
+      <hardwareInterface>PositionJointInterface</hardwareInterface>
+      <mechanicalReduction>10</mechanicalReduction>
+    </actuator>
+  </transmission>
+
+  <transmission name="${name}_c_transmission">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="${name}_c_joint">
+      <hardwareInterface>PositionJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="${name}_c_joint_leg_actuator">
+      <hardwareInterface>PositionJointInterface</hardwareInterface>
+      <mechanicalReduction>10</mechanicalReduction>
+    </actuator>
+  </transmission>
 </macro>
 </robot>

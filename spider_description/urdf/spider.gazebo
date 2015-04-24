@@ -12,11 +12,11 @@
 	</gazebo>
 
 	<gazebo reference="proximal_leg">
-		<material>Gazebo/Orange</material>
+		<material>Gazebo/White</material>
 	</gazebo>
 
 	<gazebo reference="distal_leg">
-		<material>Gazebo/Blue</material>
+		<material>Gazebo/White</material>
 	</gazebo>
 
 	<gazebo reference="a_servo">
@@ -25,13 +25,5 @@
 
 	<gazebo reference="b_servo">
 		<material>Gazebo/Blue</material>
-	</gazebo>
-
-	<gazebo reference="proximal_leg">
-		<material>Gazebo/Gray</material>
-	</gazebo>
-
-	<gazebo reference="distal_leg">
-		<material>Gazebo/Gray</material>
 	</gazebo>
 </robot>

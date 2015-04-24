@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <launch>
-	<arg name="paused" default="true"/>
+	<arg name="paused" default="false"/>
 	<arg name="use_sim_time" default="true"/>
 	<arg name="gui" default="true"/>
 	<arg name="headless" default="false"/>
@@ -36,12 +36,18 @@
 	
 	<node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false"
     output="screen" ns="/spider" args=" joint_state_controller
-    									a_joint_position_controller
-    									b_joint_position_controller
-    									c_joint_position_controller
     									FL_a_joint_position_controller
     									FL_b_joint_position_controller
-    									FL_c_joint_position_controller"/>
+    									FL_c_joint_position_controller
+    									FR_a_joint_position_controller
+    									FR_b_joint_position_controller
+    									FR_c_joint_position_controller
+    									BL_a_joint_position_controller
+    									BL_b_joint_position_controller
+    									BL_c_joint_position_controller
+    									BR_a_joint_position_controller
+    									BR_b_joint_position_controller
+    									BR_c_joint_position_controller"/>
 
     <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" respawn="false" output="screen">
 		<remap from="/joint_states" to="/spider/joint_states" />
