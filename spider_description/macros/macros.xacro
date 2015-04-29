@@ -125,7 +125,7 @@
     <child link="${name}_b_servo"/>
     <origin xyz="${(servo_length+servo_width)/2} 0 ${-servo_height/4}" rpy="0 0 ${(1.57)*(2*reflect-1)}"/>
     <axis xyz="0 1 0"/>
-    <limit lower="-1.57" upper="1.57" effort="1" velocity="1"/>
+    <limit lower="-1.57" upper="1.57" effort="1" velocity="3"/>
   </joint>
 
   <joint name="${name}_b_joint" type="revolute">
@@ -134,7 +134,7 @@
     <origin xyz="${(servo_length+leg_radius)/2} 0 ${-servo_height/4}" rpy="${(1.57)*(2*reflect-1)} 0 0"/>
     <axis xyz="1 0 0"/>
     <!-- Aqui esta el problema. Para un lado debe ser l=-3.14 y u=0 y para el otro l=0 y u=3.14 -->
-    <limit lower="${(1-reflect)*(-3.14)+(reflect)*(0)}" upper="${(1-reflect)*(0)+(reflect)*(3.14)}" effort="1" velocity="1"/>
+    <limit lower="${(1-reflect)*(-3.14)+(reflect)*(0)}" upper="${(1-reflect)*(0)+(reflect)*(3.14)}" effort="1" velocity="3"/>
   </joint>
 
   <joint name="${name}_c_joint" type="revolute">
@@ -142,7 +142,7 @@
     <child link="${name}_distal_leg"/>
     <origin xyz="0 ${(-1)*(2*reflect-1)*(leg_radius*2)} ${leg_a_length}" rpy="0 3.14 0"/>
     <axis xyz="1 0 0"/>
-    <limit lower="${(1-reflect)*(-3.14)+(reflect)*(0)}" upper="${(1-reflect)*(0)+(reflect)*(3.14)}" effort="1" velocity="1"/>
+    <limit lower="${(1-reflect)*(-3.14)+(reflect)*(0)}" upper="${(1-reflect)*(0)+(reflect)*(3.14)}" effort="1" velocity="3"/>
   </joint>
 
   <transmission name="${name}_a_transmission">

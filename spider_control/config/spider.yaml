@@ -63,3 +63,33 @@ spider:
     type: position_controllers/JointPositionController
     joint: BR_c_joint
     pid: {p: 100.0, i: 0.01, d: 10.0}
+
+  ML_a_joint_position_controller:
+    type: position_controllers/JointPositionController
+    joint: ML_a_joint
+    pid: {p: 100.0, i: 0.01, d: 10.0}
+
+  ML_b_joint_position_controller:
+    type: position_controllers/JointPositionController
+    joint: ML_b_joint
+    pid: {p: 100.0, i: 0.01, d: 10.0}
+
+  ML_c_joint_position_controller:
+    type: position_controllers/JointPositionController
+    joint: ML_c_joint
+    pid: {p: 100.0, i: 0.01, d: 10.0}
+
+  MR_a_joint_position_controller:
+    type: position_controllers/JointPositionController
+    joint: MR_a_joint
+    pid: {p: 100.0, i: 0.01, d: 10.0}
+
+  MR_b_joint_position_controller:
+    type: position_controllers/JointPositionController
+    joint: MR_b_joint
+    pid: {p: 100.0, i: 0.01, d: 10.0}
+
+  MR_c_joint_position_controller:
+    type: position_controllers/JointPositionController
+    joint: MR_c_joint
+    pid: {p: 100.0, i: 0.01, d: 10.0}
