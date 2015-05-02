@@ -2,11 +2,15 @@
 # Insertar una licencia fantabulosa
 
 import rospy
+import roslib; roslib.load_manifest('gazebo_ros')
+from std_srvs.srv import Empty
+from gazebo_msgs.srv import GetModelState
 from std_msgs.msg import Float64
 import numpy as np
 import sys
 import os
 import time
+import random
 from gi.repository import Gtk
 
 class ControlGui:
@@ -22,13 +26,29 @@ class ControlGui:
 			"on_stand": sp.stand,
 			"on_rest": sp.rest,
 			"on_walk": sp.walk,
-			"on_reset": sp.reset_pose
+			"on_reset": sp.reset_pose,
+			"on_start_experiment": sp.start_experiment
 		}
 
 		self.builder.connect_signals(handlers)
 
 class SpiderControl:
 	def __init__(self):
+		# Initializes proxy for calling gazebo/reset_simulation service with Empty message response
+		rospy.wait_for_service('/gazebo/reset_simulation')		
+		try:
+			self.resetSimulation = rospy.ServiceProxy('/gazebo/reset_simulation', Empty)
+		except rospy.ServiceException, e:
+			print "Service call failed: %s"%e
+
+		# Initializes proxy for calling gazebo/get_model_states service with GetModelState message response
+		rospy.wait_for_service('/gazebo/get_model_state')
+		try:
+			self.getModelState = rospy.ServiceProxy('/gazebo/get_model_state', GetModelState)
+		except rospy.ServiceException, e:
+			print "Service call failed: %s"%e
+
+		# Initializes joints controllers
 		topics = [	'/spider/BL_a_joint_position_controller/command',
 					'/spider/BL_b_joint_position_controller/command',
 					'/spider/BL_c_joint_position_controller/command',
@@ -136,9 +156,82 @@ class SpiderControl:
 			self.legs[1].publish([.5, .25, .25])
 			self.legs[2].publish([.5, .25, .25])
 			self.legs[5].publish([.75, .25, .25])
+
 	def reset_pose(self, event):
-		print "Resetting pose"
-		
+		print "Resetting simulation"
+		self.resetSimulation()
+		gait = []
+		for i in range(10):
+			gait.append([int(6*random.random()) for i in range(6)])
+		print gait
+		for k in range(len(gait)):
+			self.publish_gait_state(gait[k])
+			time.sleep(.2)
+		#self.publish_gait_state([0, 1, 2, 3, 4, 5])
+		res = self.getModelState('spider', '')
+		print "Position x: ", res.pose.position.x
+		self.reset_joints()
+		time.sleep(.5)
+		self.resetSimulation()
+
+	def start_experiment(self, event):
+		self.best_x = 0
+		while 1:
+			self.resetSimulation()
+			gait = []
+			for i in range(10):
+				gait.append([int(6*random.random()) for i in range(6)])
+			#print gait
+			for k in range(len(gait)):
+				self.publish_gait_state(gait[k])
+				time.sleep(.2)
+			res = self.getModelState('spider', '')
+			x = res.pose.position.x
+			if x > self.best_x:
+				self.best_x = x
+			print "best_x: ", self.best_x, " x: ", x
+			self.reset_joints()
+			time.sleep(1)
+			self.resetSimulation()
+
+	def publish_gait_state(self, gait):
+		# gait must be a list of six values for each leg state
+		poses = {
+				'0': [.5, .25, .25],
+				'1': [.7, .25, .25],
+				'2': [.7, .20, .25],
+				'3': [.5, .20, .25],
+				'4': [.3, .20, .25],
+				'5': [.3, .25, .25]
+			}
+		for i in range(len(gait)):
+			# publish joints states according to gait states vector
+			# (Need to map a gait state to three joint states per leg)
+			# Six states from Belter D., Skrzypczynski N. (2010) "A biologically inspired approach to 
+			# feasible gait learning for a hexapod robot" will be used
+			# [0]: support phase, neutral position: the tip of the leg on the ground
+			# [1]: support phase, posterior extreme position: the tip of the leg on the ground
+			# [2]: transfer phase, posterior extreme position: the tip of the leg above the ground
+			# [3]: transfer phase, neutral position: the tip of the leg above the ground
+			# [4]: transfer phase, anterior extreme position: the tip of the leg above the ground
+			# [5]: support phase, anterior extreme position: the tip of the leg on the ground
+			self.legs[i].publish(poses[str(gait[i])])
+			#print "Publicando para ",i, " las poses ",poses[str(gait[i])]
+
+	def spawn_robot(self):
+		os.system("rosrun gazebo_ros spawn_model -param robot_description -urdf -model spider")
+	def remove_robot(self):
+		os.system("rosservice call gazebo/delete_model '{model_name: spider}'")
+
+	def reset_joints(self):
+		#print 'Resetting joints'
+		if not rospy.is_shutdown():
+			self.legs[0].publish([.5, 0, 0])
+			self.legs[1].publish([.5, 0, 0])
+			self.legs[2].publish([.5, 0, 0])
+			self.legs[3].publish([.5, 0, 0])
+			self.legs[4].publish([.5, 0, 0])
+			self.legs[5].publish([.5, 0, 0])
 
 class LegControl:
 	'Class to control a leg of the robot'
