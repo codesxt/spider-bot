@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf8 -*-
 # Insertar una licencia fantabulosa
 
 import rospy
@@ -12,6 +13,7 @@ import os
 import time
 import random
 from gi.repository import Gtk
+import ga
 
 class ControlGui:
 	def __init__(self):
@@ -175,6 +177,7 @@ class SpiderControl:
 		self.resetSimulation()
 
 	def start_experiment(self, event):
+		"""
 		self.best_x = 0
 		while 1:
 			self.resetSimulation()
@@ -193,6 +196,48 @@ class SpiderControl:
 			self.reset_joints()
 			time.sleep(1)
 			self.resetSimulation()
+		"""
+		n_steps = 10 		# Cantidad pasos en una secuencia
+		sleep_time = .2	# Tiempo entre pasos
+		n_dims = 6			# Cantidad de variables en cada paso
+		n_gaits = 26		# Cantidad de secuencias en una población
+		n_generations = 30	# Cantidad de generaciones en el algoritmo genético
+
+		gait_population = []
+		for i in range(n_gaits):
+			gait = [int(6*random.random()) for i in range(n_dims*n_steps)]
+			gait_population.append(gait)
+		gait_population[0] = [1, 0, 2, 1, 1, 4, 4, 0, 5, 3, 1, 3, 4, 0, 0, 4, 0, 1, 2, 0, 3, 5, 2, 1, 4, 0, 1, 3, 5, 3, 2, 0, 5, 4, 3, 1, 5, 0, 4, 1, 4, 4, 1, 4, 3, 3, 2, 3, 5, 3, 1, 2, 5, 3, 2, 0, 5, 5, 1, 4]
+		gen = ga.GeneticAlgorithm(gait_population)
+		for i in range(n_generations):
+			print "Generación: ", i
+			fitness = []
+			for j in range(len(gait_population)):
+				self.resetSimulation
+				for k in range(n_steps):
+					gait_state = gait_population[j][k*6:k*6+6]
+					self.publish_gait_state(gait_state)
+					time.sleep(sleep_time)
+
+				res = self.getModelState('spider', '')
+				x = res.pose.position.x
+				if x < 0:
+					fit_val = 0
+				else:
+					fit_val = (x*1000)**2
+				fitness.append(fit_val)
+				
+				self.reset_joints()
+				time.sleep(.5)
+				self.resetSimulation()
+				print ">Individuo ", j," x: ", x
+			max_fit = max(fitness)
+			index = fitness.index(max_fit)
+			print "Generación ",i," finalizada."
+			print ">> Mejor distancia: ", max_fit
+			print ">> Posición: ", index
+			print ">> Patrón: ", gait_population[index]
+			gait_population = gen.reproduce(fitness)
 
 	def publish_gait_state(self, gait):
 		# gait must be a list of six values for each leg state
