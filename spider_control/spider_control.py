@@ -14,12 +14,21 @@ import time
 import random
 from gi.repository import Gtk
 import ga
+import threading
 
 class ControlGui:
 	def __init__(self):
 		self.builder = Gtk.Builder()
-		self.builder.add_from_file('gui/spider.glade')
+		self.builder.add_from_file('gui/HexapodControl.glade')
 		self.window = self.builder.get_object('MainWindow')
+		self.n_population = self.builder.get_object('SpinPopulation')
+		self.n_generations = self.builder.get_object('SpinGenerations')
+		self.n_steps = self.builder.get_object('SpinSteps')
+		self.sampling_time = self.builder.get_object('SpinSamplingTime')
+		self.p_cross = self.builder.get_object('SpinPCross')
+		self.p_mut = self.builder.get_object('SpinPMut')
+		self.status_bar = self.builder.get_object('StatusBar')
+		self.context_id = self.status_bar.get_context_id("Global Status Bar")
 
 		self.window.show()
 
@@ -29,10 +38,16 @@ class ControlGui:
 			"on_rest": sp.rest,
 			"on_walk": sp.walk,
 			"on_reset": sp.reset_pose,
-			"on_start_experiment": sp.start_experiment
+			"on_ButtonStartExperiment_clicked": sp.start_thread,
+			"on_ButtonEndExperiment_clicked": sp.end_thread
 		}
 
 		self.builder.connect_signals(handlers)
+
+		self.push_message("Status: Standby")
+
+	def push_message(self, message):
+		self.status_bar.push(self.context_id, message)
 
 class SpiderControl:
 	def __init__(self):
@@ -85,6 +100,8 @@ class SpiderControl:
 		except rospy.ROSInterruptException:
 			pass
 
+		self.is_learning = False
+
 	def stand(self, event):
 		print 'Standing'
 		if not rospy.is_shutdown():
@@ -106,58 +123,7 @@ class SpiderControl:
 	def walk(self, event):
 		print 'Walking'
 		if not rospy.is_shutdown():
-			#FL-MR-BL
-			self.legs[0].publish([.25, .25, .25])
-			self.legs[3].publish([.5, .25, .25])
-			self.legs[4].publish([.75, .25, .25])
-			#FR-ML-BR
-			self.legs[1].publish([.25, .10, .25])
-			self.legs[2].publish([.5, .10, .25])
-			self.legs[5].publish([.75, .10, .25])
-
-			time.sleep(1)
-
-			#FL-MR-BL
-			self.legs[0].publish([.25, .25, .25])
-			self.legs[3].publish([.5, .25, .25])
-			self.legs[4].publish([.75, .25, .25])
-			#FR-ML-BR
-			self.legs[1].publish([.25, .10, .25])
-			self.legs[2].publish([.25, .10, .25])
-			self.legs[5].publish([.25, .10, .25])
-
-			time.sleep(1)
-
-			#FL-MR-BL
-			self.legs[0].publish([.25, .25, .25])
-			self.legs[3].publish([.5, .25, .25])
-			self.legs[4].publish([.75, .25, .25])
-			#FR-ML-BR
-			self.legs[1].publish([.25, .25, .25])
-			self.legs[2].publish([.25, .25, .25])
-			self.legs[5].publish([.25, .25, .25])
-
-			time.sleep(1)
-
-			#FL-MR-BL
-			self.legs[0].publish([.25, .10, .25])
-			self.legs[3].publish([.5, .10, .25])
-			self.legs[4].publish([.75, .10, .25])
-			#FR-ML-BR
-			self.legs[1].publish([.5, .25, .25])
-			self.legs[2].publish([.5, .25, .25])
-			self.legs[5].publish([.75, .25, .25])
-
-			time.sleep(1)
-
-			#FL-MR-BL
-			self.legs[0].publish([.25, .25, .25])
-			self.legs[3].publish([.25, .25, .25])
-			self.legs[4].publish([.25, .25, .25])
-			#FR-ML-BR
-			self.legs[1].publish([.5, .25, .25])
-			self.legs[2].publish([.5, .25, .25])
-			self.legs[5].publish([.75, .25, .25])
+			print "Brunaldo, que no se te olvide programar bien la caminata."
 
 	def reset_pose(self, event):
 		print "Resetting simulation"
@@ -175,69 +141,6 @@ class SpiderControl:
 		self.reset_joints()
 		time.sleep(.5)
 		self.resetSimulation()
-
-	def start_experiment(self, event):
-		"""
-		self.best_x = 0
-		while 1:
-			self.resetSimulation()
-			gait = []
-			for i in range(10):
-				gait.append([int(6*random.random()) for i in range(6)])
-			#print gait
-			for k in range(len(gait)):
-				self.publish_gait_state(gait[k])
-				time.sleep(.2)
-			res = self.getModelState('spider', '')
-			x = res.pose.position.x
-			if x > self.best_x:
-				self.best_x = x
-			print "best_x: ", self.best_x, " x: ", x
-			self.reset_joints()
-			time.sleep(1)
-			self.resetSimulation()
-		"""
-		n_steps = 10 		# Cantidad pasos en una secuencia
-		sleep_time = .2	# Tiempo entre pasos
-		n_dims = 6			# Cantidad de variables en cada paso
-		n_gaits = 26		# Cantidad de secuencias en una población
-		n_generations = 30	# Cantidad de generaciones en el algoritmo genético
-
-		gait_population = []
-		for i in range(n_gaits):
-			gait = [int(6*random.random()) for i in range(n_dims*n_steps)]
-			gait_population.append(gait)
-		gait_population[0] = [1, 0, 2, 1, 1, 4, 4, 0, 5, 3, 1, 3, 4, 0, 0, 4, 0, 1, 2, 0, 3, 5, 2, 1, 4, 0, 1, 3, 5, 3, 2, 0, 5, 4, 3, 1, 5, 0, 4, 1, 4, 4, 1, 4, 3, 3, 2, 3, 5, 3, 1, 2, 5, 3, 2, 0, 5, 5, 1, 4]
-		gen = ga.GeneticAlgorithm(gait_population)
-		for i in range(n_generations):
-			print "Generación: ", i
-			fitness = []
-			for j in range(len(gait_population)):
-				self.resetSimulation
-				for k in range(n_steps):
-					gait_state = gait_population[j][k*6:k*6+6]
-					self.publish_gait_state(gait_state)
-					time.sleep(sleep_time)
-
-				res = self.getModelState('spider', '')
-				x = res.pose.position.x
-				if x < 0:
-					fit_val = 0
-				else:
-					fit_val = (x*1000)**2
-				fitness.append(fit_val)
-				
-				self.reset_joints()
-				time.sleep(.5)
-				self.resetSimulation()
-				print ">Individuo ", j," x: ", x
-			max_fit = max(fitness)
-			index = fitness.index(max_fit)
-			print "Generación ",i," finalizada."
-			print ">> Mejor distancia: ", max_fit
-			print ">> Posición: ", index
-			print ">> Patrón: ", gait_population[index]
-			gait_population = gen.reproduce(fitness)
 
 	def publish_gait_state(self, gait):
 		# gait must be a list of six values for each leg state
@@ -277,6 +180,76 @@ class SpiderControl:
 			self.legs[3].publish([.5, 0, 0])
 			self.legs[4].publish([.5, 0, 0])
 			self.legs[5].publish([.5, 0, 0])
+	def learning_thread(self):
+		"""Función encargada del aprendizaje de gaits"""
+		print "[Hilo: ",threading.currentThread().getName(), 'Lanzado]'
+
+		n_population = int(gui.n_population.get_value())
+		n_generations = int(gui.n_generations.get_value())
+		n_steps = int(gui.n_steps.get_value())
+		sampling_time = gui.sampling_time.get_value()
+		p_cross = gui.p_cross.get_value()
+		p_mut = gui.p_mut.get_value()
+
+		gait_population = []
+		for i in range(n_population):
+			gait = [int(6*random.random()) for i in range(6*n_steps)]
+			gait_population.append(gait)
+
+		gen = ga.GeneticAlgorithm(gait_population)
+		gen.set_pcross(p_cross)
+		gen.set_pmut(p_mut)
+		for i in range(n_generations):
+			if not self.is_learning:				
+				break
+
+			print "Generación: ", i
+			fitness = []
+			for j in range(len(gait_population)):
+				if not self.is_learning:				
+					break
+				self.resetSimulation
+				for k in range(n_steps):
+					gait_state = gait_population[j][k*6:k*6+6]
+					self.publish_gait_state(gait_state)
+					time.sleep(sampling_time)
+
+				res = self.getModelState('spider', '')
+				x = res.pose.position.x
+				if x < 0:
+					fit_val = 0
+				else:
+					fit_val = (x*1000)**2
+				fitness.append(fit_val)
+				
+				self.reset_joints()
+				time.sleep(.5)
+				self.resetSimulation()
+				print ">Individuo ", j," x: ", x
+				status_message = "Status: Learning " + "   Generation: " + str(i+1) + "/" + str(n_generations) + "   Individual: " + str(j+1) + "/" + str(n_population) + "    X: " + str(x*100) + " cms."
+				gui.push_message(status_message)
+			max_fit = max(fitness)
+			index = fitness.index(max_fit)
+			print "Generación ",i," finalizada."
+			print ">> Mejor distancia: ", max_fit
+			print ">> Posición: ", index
+			print ">> Patrón: ", gait_population[index]
+			gait_population = gen.reproduce(fitness)			
+
+		print "[Hilo: ",threading.currentThread().getName(), 'Deteniendo]'
+		status_message = "Status: Standby"
+		gui.push_message(status_message)
+
+	def start_thread(self, event):
+		# Iniciar el hilo de aprendizaje
+		self.is_learning = True
+		self.t = threading.Thread(target=self.learning_thread, name="Learning")
+		self.t.start()
+
+	def end_thread(self, event):
+		# Finalizar el hilo de aprendizaje
+		print "Aborting learning process"
+		self.is_learning = False		
 
 class LegControl:
 	'Class to control a leg of the robot'

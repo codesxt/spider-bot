@@ -28,6 +28,12 @@ class GeneticAlgorithm:
 		else:
 			self.fitness = fitness
 
+	def set_pcross(self, pcross):
+		self.cross_prob = pcross
+
+	def set_pmut(self, pmut):
+		self.mut_prob = pmut
+
 	def print_population(self):
 		for i in range(self.population_size):
 			print self.population[i], "[Fitness: ", self.fitness[i],"]"
