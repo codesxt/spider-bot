@@ -2,6 +2,9 @@
 import random
 
 class GeneticAlgorithm:
+	ONE_POINT = 0
+	TWO_POINT = 1
+
 	population = []
 	fitness = []
 	population_size = 0
@@ -58,18 +61,41 @@ class GeneticAlgorithm:
 			new_population.append(self.population[index])
 		return new_population
 
-	def crossover(self):
-		for i in range(self.population_size/2):
-			if (random.random() < self.cross_prob):
-				size = len(self.population[0])
-				cut_point = random.randint(0,size-1)				
-				i1 = self.population[2*i]
-				i2 = self.population[2*i+1]
-				h1 = i1[0:cut_point] + i2[cut_point:size]
-				h2 = i2[0:cut_point] + i1[cut_point:size]
-				self.population[2*i] = h1
-				self.population[2*i+1] = h2
-		return self.population
+	def crossover(self, cros_type=ONE_POINT):
+		if (cros_type == self.ONE_POINT):
+			for i in range(self.population_size/2):
+				if (random.random() < self.cross_prob):
+					size = len(self.population[0])
+					cut_point = random.randint(0,size-1)				
+					i1 = self.population[2*i]
+					i2 = self.population[2*i+1]
+					h1 = i1[0:cut_point] + i2[cut_point:size]
+					h2 = i2[0:cut_point] + i1[cut_point:size]
+					self.population[2*i] = h1
+					self.population[2*i+1] = h2
+			return self.population
+		if (cros_type == self.TWO_POINT):
+			for i in range(self.population_size/2):
+				if (random.random() < self.cross_prob):
+					size = len(self.population[0])
+					c_point_a = random.randint(0,size-1)
+					c_point_b = random.randint(0,size-1)
+
+					if(c_point_a > c_point_b):
+						c_point_min = c_point_b
+						c_point_max = c_point_a
+					else:
+						c_point_min = c_point_a
+						c_point_max = c_point_b
+					i1 = self.population[2*i]
+					i2 = self.population[2*i+1]
+
+					h1 = i1[0:c_point_min] + i2[c_point_min:c_point_max] + i1[c_point_max:size]
+					h2 = i2[0:c_point_min] + i1[c_point_min:c_point_max] + i2[c_point_max:size]
+
+					self.population[2*i] = h1
+					self.population[2*i+1] = h2
+			return self.population
 
 	def mutate(self):
 		for i in range(self.population_size):
@@ -81,6 +107,6 @@ class GeneticAlgorithm:
 	def reproduce(self, fitness):
 		self.set_fitness(fitness)
 		self.population = self.roulette_select()
-		self.population = self.crossover()
+		self.population = self.crossover(cros_type=self.TWO_POINT)
 		self.population = self.mutate()
 		return self.population

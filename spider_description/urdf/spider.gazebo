@@ -25,5 +25,5 @@
 
 	<gazebo reference="b_servo">
 		<material>Gazebo/Blue</material>
-	</gazebo>
+	</gazebo>	
 </robot>

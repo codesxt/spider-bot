@@ -37,7 +37,7 @@ class ControlGui:
 			"on_stand": sp.stand,
 			"on_rest": sp.rest,
 			"on_walk": sp.walk,
-			"on_reset": sp.reset_pose,
+			"on_reset": sp.reset_joints,
 			"on_ButtonStartExperiment_clicked": sp.start_thread,
 			"on_ButtonEndExperiment_clicked": sp.end_thread
 		}
@@ -88,10 +88,10 @@ class SpiderControl:
 			self.publishers = []
 			self.legs = []
 			self.legs.append(LegControl('FL', [topics[6], topics[7], topics[8]]))
-			self.legs.append(LegControl('FR', [topics[9], topics[10], topics[11]]))
 			self.legs.append(LegControl('ML', [topics[12], topics[13], topics[14]]))
-			self.legs.append(LegControl('MR', [topics[15], topics[16], topics[17]]))
 			self.legs.append(LegControl('BL', [topics[0], topics[1], topics[2]]))
+			self.legs.append(LegControl('FR', [topics[9], topics[10], topics[11]]))			
+			self.legs.append(LegControl('MR', [topics[15], topics[16], topics[17]]))			
 			self.legs.append(LegControl('BR', [topics[3], topics[4], topics[5]]))
 
 			for i in range(len(topics)):
@@ -124,36 +124,17 @@ class SpiderControl:
 		print 'Walking'
 		if not rospy.is_shutdown():
 			print "Brunaldo, que no se te olvide programar bien la caminata."
+			leg = [0, 2, 3, 1, 2, 2, 1, 2, 2, 2, 4, 2, 2, 2, 2, 2]
+			legs = self.buildLegs(leg)
+			for i in range(len(leg)):
+				pose = [legs[l][i] for l in range(6)]
+				print pose
+				self.publish_gait_state(pose)
+				time.sleep(.2)
 
-	def reset_pose(self, event):
-		print "Resetting simulation"
-		self.resetSimulation()
-		gait = []
-		for i in range(10):
-			gait.append([int(6*random.random()) for i in range(6)])
-		print gait
-		for k in range(len(gait)):
-			self.publish_gait_state(gait[k])
-			time.sleep(.2)
-		#self.publish_gait_state([0, 1, 2, 3, 4, 5])
-		res = self.getModelState('spider', '')
-		print "Position x: ", res.pose.position.x
-		self.reset_joints()
-		time.sleep(.5)
-		self.resetSimulation()
-
-	def publish_gait_state(self, gait):
+	def publish_gait_state(self, pose):
 		# gait must be a list of six values for each leg state
-		poses = {
-				'0': [.5, .25, .25],
-				'1': [.7, .25, .25],
-				'2': [.7, .20, .25],
-				'3': [.5, .20, .25],
-				'4': [.3, .20, .25],
-				'5': [.3, .25, .25]
-			}
-		for i in range(len(gait)):
-			# publish joints states according to gait states vector
+		# publish joints states according to gait states vector
 			# (Need to map a gait state to three joint states per leg)
 			# Six states from Belter D., Skrzypczynski N. (2010) "A biologically inspired approach to 
 			# feasible gait learning for a hexapod robot" will be used
@@ -163,13 +144,63 @@ class SpiderControl:
 			# [3]: transfer phase, neutral position: the tip of the leg above the ground
 			# [4]: transfer phase, anterior extreme position: the tip of the leg above the ground
 			# [5]: support phase, anterior extreme position: the tip of the leg on the ground
-			self.legs[i].publish(poses[str(gait[i])])
-			#print "Publicando para ",i, " las poses ",poses[str(gait[i])]
+		poses = {
+				'0': [.5, .25, .25],
+				'1': [.7, .25, .25],
+				'2': [.7, .20, .25],
+				'3': [.5, .20, .25],
+				'4': [.3, .20, .25],
+				'5': [.3, .25, .25]
+			}
+		p = [[.5, .25, .25],
+			 [.7, .25, .25],
+			 [.7, .20, .20],
+			 [.5, .20, .25],
+			 [.3, .20, .25],
+			 [.3, .25, .25]]
+		for k in range(6):
+			#print "'",pose[k],"':",p[pose[0]]
+			#self.legs[k].publish(p[pose[k]])
+			if pose[k] == 0:
+				self.legs[k].publish([.5, .25, .25])
+			if pose[k] == 1:
+				self.legs[k].publish([.7, .25, .25])
+			if pose[k] == 2:
+				self.legs[k].publish([.7, .20, .20])
+			if pose[k] == 3:
+				self.legs[k].publish([.5, .20, .25])
+			if pose[k] == 4:
+				self.legs[k].publish([.3, .20, .25])
+			if pose[k] == 5:
+				self.legs[k].publish([.3, .25, .25])
 
 	def spawn_robot(self):
 		os.system("rosrun gazebo_ros spawn_model -param robot_description -urdf -model spider")
 	def remove_robot(self):
 		os.system("rosservice call gazebo/delete_model '{model_name: spider}'")
+
+	def printLegs(sequences):
+		"""Prints each leg in the array legs in a line"""
+		for i in range(len(sequences)):
+			print "Leg ",i,":",sequences[i]
+
+	def buildLegs(self, leg):
+		"""Builds an array of legs with the respective phase shifts.
+		[0] ^ [1]
+		[2] | [3]
+		[4]   [5]
+		"""
+		legs = []
+		for i in range(6):
+			if i % 2 == 0:
+				legs.append(leg)
+			else:
+				legs.append(self.phaseShift(leg))
+		return legs
+
+	def phaseShift(self, leg):
+		"""Applies a 180° phase shift in leg states"""
+		return [((leg[i]+3) % 6) for i in range(len(leg))]
 
 	def reset_joints(self):
 		#print 'Resetting joints'
@@ -180,6 +211,7 @@ class SpiderControl:
 			self.legs[3].publish([.5, 0, 0])
 			self.legs[4].publish([.5, 0, 0])
 			self.legs[5].publish([.5, 0, 0])
+
 	def learning_thread(self):
 		"""Función encargada del aprendizaje de gaits"""
 		print "[Hilo: ",threading.currentThread().getName(), 'Lanzado]'
@@ -191,9 +223,10 @@ class SpiderControl:
 		p_cross = gui.p_cross.get_value()
 		p_mut = gui.p_mut.get_value()
 
+		#Cada población representa la pierna 0
 		gait_population = []
 		for i in range(n_population):
-			gait = [int(6*random.random()) for i in range(6*n_steps)]
+			gait = [int(6*random.random()) for i in range(n_steps)]
 			gait_population.append(gait)
 
 		gen = ga.GeneticAlgorithm(gait_population)
@@ -205,25 +238,35 @@ class SpiderControl:
 
 			print "Generación: ", i
 			fitness = []
+			max_dist = 0
 			for j in range(len(gait_population)):
 				if not self.is_learning:				
 					break
-				self.resetSimulation
+				self.resetSimulation()
+				gait_set = self.buildLegs(gait_population[j])
+				print gait_population[j]
 				for k in range(n_steps):
-					gait_state = gait_population[j][k*6:k*6+6]
-					self.publish_gait_state(gait_state)
+					pose = [gait_set[l][k] for l in range(6)]
+					#print "PUBLICANDO"
+					#pose = [0, 0, 0, 0, 0, 0]
+					self.publish_gait_state(pose)
 					time.sleep(sampling_time)
+					#gait_state = gait_population[j][k*6:k*6+6]
+					#self.publish_gait_state(gait_state)
 
 				res = self.getModelState('spider', '')
 				x = res.pose.position.x
+				if x > max_dist:
+					max_dist = x
 				if x < 0:
 					fit_val = 0
 				else:
-					fit_val = (x*1000)**2
+					#fit_val = (x*1000)**2
+					fit_val = x*1000
 				fitness.append(fit_val)
 				
 				self.reset_joints()
-				time.sleep(.5)
+				time.sleep(1)
 				self.resetSimulation()
 				print ">Individuo ", j," x: ", x
 				status_message = "Status: Learning " + "   Generation: " + str(i+1) + "/" + str(n_generations) + "   Individual: " + str(j+1) + "/" + str(n_population) + "    X: " + str(x*100) + " cms."
@@ -231,9 +274,10 @@ class SpiderControl:
 			max_fit = max(fitness)
 			index = fitness.index(max_fit)
 			print "Generación ",i," finalizada."
-			print ">> Mejor distancia: ", max_fit
-			print ">> Posición: ", index
-			print ">> Patrón: ", gait_population[index]
+			print ">> Mejor individuo: "
+			print ">>> Posición: ", index
+			print ">>> Distancia Máxima:", max_dist
+			print ">>> Patrón: ", gait_population[index]
 			gait_population = gen.reproduce(fitness)			
 
 		print "[Hilo: ",threading.currentThread().getName(), 'Deteniendo]'
@@ -262,6 +306,7 @@ class LegControl:
 			self.publishers.append(rospy.Publisher(topics[i], Float64, queue_size=10))
 
 	def publish(self, values):
+		#print "Values:",values
 		values = self.map(values)
 		for i in range(len(values)):
 			self.publishers[i].publish(values[i])
